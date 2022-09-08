@@ -27,14 +27,14 @@ Write-Host "$(Get-TimeStamp) Starting PoSh profile script" -ForegroundColor Gree
 
 
 # Add python 3 to the path if it is installed
-if ( (Test-Path "C:\Program Files\Python310") -and (!$env:Path.Contains("C:\Program Files\Python310")) ){
+if ( (Test-Path "C:\Program Files\Python 3.9") -and (!$env:Path.Contains("C:\Program Files\Python 3.9")) ){
     Write-Host "$(Get-TimeStamp) Adding Python 3 to the path."
-    $env:Path+= ";C:\Program Files\Python310"
+    $env:Path+= ";C:\Program Files\Python 3.9"
 }
 # Add python 3 to the path if it is installed
-elseif ( (Test-Path "$env:LOCALAPPDATA\Programs\Python\Python310") -and (!$env:Path.Contains("$env:LOCALAPPDATA\Programs\Python\Python310")) ){
+elseif ( (Test-Path "$env:LOCALAPPDATA\Programs\Python\Python39") -and (!$env:Path.Contains("$env:LOCALAPPDATA\Programs\Python\Python39")) ){
     Write-Host "$(Get-TimeStamp) Adding Python 3 to the path."
-    $env:Path+= ";$env:LOCALAPPDATA\Programs\Python\Python310"
+    $env:Path+= ";$env:LOCALAPPDATA\Programs\Python\Python39"
 }
 
 
@@ -43,7 +43,7 @@ Write-Host "$(Get-TimeStamp) Checking PowerShellGet version...";
 # Check that powershellget is at a good enough version...
 if ( (Get-InstalledModule powershellget -ErrorAction SilentlyContinue).Version.split('.')[0] -lt 2 ){
     Write-Host "$(Get-TimeStamp) Module powershellget must be Version 2 or higher to install required modules. Update it using an admin PoSh session using the following command:" -ForegroundColor $errorColour;
-    Write-Host " Find-Module powershellget | Install-Module" -ForegroundColor $infoColour;
+    Write-Host "        Find-Module powershellget | Install-Module" -ForegroundColor $infoColour;
     return;
 }
 
@@ -118,12 +118,12 @@ $requiredModules = @(
 foreach ($module in $requiredModules) {
     #if ( (Get-InstalledModule -Name $module -ErrorAction SilentlyContinue) -eq $null) {
     $installedModule = Get-InstalledModule -Name $module.name -ErrorAction SilentlyContinue;
-   
+    
     # If no version is specified and the module is not installed, install it
     if ($installedModule -eq $null -and $module.version -eq $null) {
             Write-Host "$(Get-TimeStamp) Installing module: $($module.name)" -ForegroundColor $infoColour;
             Install-Module -Name $module.name -Scope CurrentUser -Confirm:$False;# -Force;
-   
+    
     # If the module is nto the correct version, install or update it
     } elseif ($installedModule -eq $null -and $module.version -ne $installedModule.Version) {
         if ($installedModule -eq $null) {
@@ -153,7 +153,7 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 $GitPromptSettings.DefaultPromptPrefix.Text = '`n';
 
 # Oh-my-posh settings
-Set-Theme Paradox;
+Set-PoshPrompt -Theme Paradox;
 
 # Change a few windows settings
 
@@ -173,10 +173,9 @@ Write-Host "$(Get-TimeStamp) Setting up helper functions";
 
 # Variable with my custom folders. We generate goto functions for each one, so we can either use the variable for the actual path, or use the function
 # to get there fast
-$folders = [PSCustomObject]@{  
-    src = "~\repo"
-    srcCoreDB = "~\repo\DP Warehouse"
-    
+$folders = [PSCustomObject]@{
+    src = "~\src"
+    srcCoreDatabase = "~\src\EDW - Accelerator Core\EDW - Accelerator Core Database"
 };
 $folders.PSObject.Properties | ForEach-Object { Invoke-Expression "Function GoTo-$($_.Name.SubString(0, 1).ToUpper())$($_.Name.SubString(1)) { cd `"$($_.Value)`" }" }
 
@@ -187,8 +186,8 @@ function Start-SshAgentWithKeys {
 
     # Start the SSH agent and load all the keys. This will prompt for passwords...
     Start-SshAgent;
-    Get-ChildItem ~\.ssh\ |
-        Where-Object { $_.Name -NotLike '*.pub' -and $_.Name -ine 'config' -and $_.Name -ine "known_hosts" } |
+    Get-ChildItem ~\.ssh\ | 
+        Where-Object { $_.Name -NotLike '*.pub' -and $_.Name -ine 'config' -and $_.Name -ine "known_hosts" } | 
         ForEach-Object { Add-SshKey $_.FullName};
 
     # List the keys now loaded
@@ -202,7 +201,7 @@ function Start-PreventSleep {
         [String]
         $Until
     )
-   
+    
     $shell = New-Object -ComObject Wscript.Shell;
 
     while ($true) {
